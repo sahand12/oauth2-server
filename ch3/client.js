@@ -72,5 +72,19 @@ app.get('/callback', (req, res) => {
   };
 
   axios.post(authServerConfig.authorizationEndPoint, formData, {headers})
-    .then();
+    .then(response => {
+      if (response.status >= 200 && response.status < 300) {
+        const body = JSON.parse(response.data);
+        accessToken = body.access_token;
+        console.log(`Got access token: ${accessToken}`);
+        return res.render('index', {accessToken, scope});
+      }
+      else {
+        return res.render('error', {error: `Unable to fetch access token, server response: ${response.status}`});
+      }
+    });
+});
+
+app.get('/fetch_resource', (req, res) => {
+
 });

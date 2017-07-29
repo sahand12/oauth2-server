@@ -1,0 +1,7 @@
+[*]
+end_of_line = lf
+final_new_line = true
+
+[*.{js,ts,jsx,html,css,less,json,scss,sass}]
+indent_style = space
+indent_size = 2

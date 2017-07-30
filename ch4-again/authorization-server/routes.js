@@ -8,7 +8,7 @@ const { requests, addRequest } = require('./requests');
 const { clients, getClient } = require('./clients');
 const { codes, addCode } = require('./codes');
 const { authServerInfo } = require('./config');
-const { users } = require('./users');
+const { getUser, users } = require('./users');
 
 exports.indexRoute = function indexRoute(req, res, next) {
   return res.render('index', { clients, authServer: authServerInfo });
@@ -220,11 +220,77 @@ exports.getToken = function getToken(req, res, next) {
   }
 
   else if (req.body.grant_type === 'refresh_token') {
+    dbPromise.then(db => {
+      db.collection('refresh_tokens')
+        .findOne({ refresh_token: req.body.refresh_token })
+        .then(token => {
 
+          // No matching token found
+          if (!token) {
+            console.log(`No matching token was found`);
+            return res.status(401).end();
+          }
+
+          // Invalid Client
+          if (token.client_id !== clientId) {
+            console.log(`Invalid client using a refresh token, expected ${token.client_id} but got ${clientId}`);
+
+            return db.collection('refresh_token')
+              .deleteOne({ refresh_token: req.body.refresh_token })
+              .then(() => res.status(400).end())
+              .catch(next);
+          }
+
+          // Everything looks good
+          console.log(`We found a matching token ${req.body.refresh_token}`);
+          const accessToken = randomString.generate();
+          const tokenResponse = {
+            access_token: accessToken,
+            token_type: 'Bearer',
+            refresh_token: req.body.refresh_token
+          };
+
+          return db.collection('access_tokens')
+            .insertOne({
+              access_token: accessToken,
+              client_id: clientId
+            })
+            .then(result => {
+              console.log(`Issuing access token ${accessToken} for refresh token ${req.body.refresh_token}`);
+
+              return res.status(200).json(tokenResponse)
+            })
+            .catch(next);
+        });
+    });
   }
 
   else if (req.body.grant_type === 'password') {
+    const username = req.body.username;
+    const user = getUser(username);
 
+    if (!user) {
+      console.log(`Unknown user ${username}`);
+      return res.status(401).json({ error: 'invalid_grant' });
+    }
+
+    console.log(`user is ${user}`);
+
+    const password = req.body.password;
+    if (user.password !== password) {
+      console.log(`Mismatched resource owner password, expected ${user.password} but got ${password}`);
+      return res.status(401).json({ error: 'invalid_grant'});
+    }
+
+    const scope = req.body.scope;
+    const tokenResponse = generateTokens(req, res, clientId, user, scope);
+
+    return res.status(200).json(tokenResponse);
+  }
+
+  else {
+    console.log(`Unknown grant type ${req.body.grant_type}`);
+    return res.status(400).json({ error: 'unsupported_grant_type' });
   }
 };
 
@@ -243,8 +309,8 @@ function generateTokens(req, res, clientId, user, scope, nonce, generateRefreshT
       client_id: clientId,
       user: user.preferred_username
   }))
-  .then(result => console.log('inserted access token', result))
-  .catch(console.error.bind(console));
+    .then(result => console.log('inserted access token', result))
+    .catch(console.error.bind(console));
 
   if (refresh_token) {
     dbPromise.then(db => db.collection('refresh_tokens')

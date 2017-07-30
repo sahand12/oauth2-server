@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { join } = require('path');
 
-const { indexRoute, authorize, approve, getToken } = './routes';
+const { indexRoute, authorize, approve, getToken } = require('./routes');
 
 const app = express();
 

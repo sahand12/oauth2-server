@@ -1,0 +1,24 @@
+doctype
+html(lang='en')
+  include includes/head
+
+  body
+    include includes/header
+
+    div(class='container')
+      div(class='jumbotron')
+
+        h2 Client Information:
+        each client in clients
+          ul
+            li #[b client_id:] #[code #{client.client_id}]
+            li #[b client_secret:] #[code #{client.client_secret}]
+            li #[b scope:] #[code #{client.scope}]
+            li #[b redirect_uri:] #[code #{client.redirect_uris}]
+
+        h2 Server Information
+        ul
+          li #[b authorization_endPoint:] #[code #{authServer.authorizationEndPoint}]
+          li #[b token_endPoint:] #[code #{authServer.tokenEndPoint}]
+
+    include includes/footer

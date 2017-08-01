@@ -1,0 +1,31 @@
+doctype
+html(lang='en')
+  include includes/head
+
+  body
+    include includes/header
+
+    div(class='container')
+      div(class='jumbotron')
+        h2 Approve this client?
+        if client.client_name
+          p <b>Name:</b> <code>#{client.client_name}</code>
+        p <b>ID:</b> <code>#{client.client_id}</code>
+        if client.client_uri
+          p <b>URI:</b> <code>#{client.client_uri}</code>
+        if client.logo_uri
+          p <b>Logo:</b> <img src='#{client.logo_uri}' />
+
+        form(class='form' action='/approve' method='POST')
+          input(type='hidden' name='reqId' value='#{reqId}')
+          if (scope)
+            p The client is requesting access to the following:
+            ul
+              each val in scope
+                li
+                  input(type='checkbox' name='scope_#{val}' id='scope_#{val}' checked='checked')
+                  label(for='scope_#{val}') #{val}
+            input(type='submit' class='btn btn-success' name='approve' value='Approve')
+            input(type='submit' class='btn btn-danger' name='deny' value='Deny')
+
+    include includes/footer

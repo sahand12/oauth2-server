@@ -1,5 +1,4 @@
 node_modules
 */.DS_Store
-ch3/node_modules
-ch4/node_modules
-
+.idea
+.vscode
